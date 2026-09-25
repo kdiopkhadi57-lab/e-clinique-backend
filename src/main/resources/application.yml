@@ -1,5 +1,6 @@
 server:
-  port: 8282
+  # Railway injecte la variable PORT ; 8282 en local
+  port: ${PORT:8282}
   servlet:
     context-path: /api
 
@@ -7,12 +8,17 @@ spring:
   application:
     name: e-clinique-backend
 
-  # ==== PostgreSQL local ====
+  # ==== MySQL ====
+  # Sur Railway, les variables MYSQLHOST / MYSQLPORT / MYSQLDATABASE / MYSQLUSER / MYSQLPASSWORD
+  # sont fournies par le service MySQL (via des références de variables).
+  # DB_URL / DB_USERNAME / DB_PASSWORD permettent de tout surcharger si besoin.
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/eclinique}
-    driver-class-name: org.postgresql.Driver
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: ${DB_URL:jdbc:mysql://${MYSQLHOST:localhost}:${MYSQLPORT:3306}/${MYSQLDATABASE:eclinique}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:${MYSQLUSER:root}}
+    password: ${DB_PASSWORD:${MYSQLPASSWORD:root}}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:5}
 
   jpa:
     hibernate:
@@ -22,7 +28,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
 
   servlet:
     multipart:
@@ -31,10 +38,10 @@ spring:
 
 app:
   jwt:
-    secret: "eCliniqueSecretKeyForJwtSigningMustBeLongEnough1234567890"
-    expiration-ms: 86400000  # 24h
+    secret: ${JWT_SECRET:eCliniqueSecretKeyForJwtSigningMustBeLongEnough1234567890}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}  # 24h
   cors:
-    allowed-origins: "http://localhost:4200"
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
   stock:
     seuil-alerte-defaut: 10
 
@@ -42,5 +49,5 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-
- #mvn -f /Users/mac/Desktop/e-clinique/backend/pom.xml spring-boot:run -Dspring-boot.run.profiles=h2
+# Lancer en local avec H2 (sans MySQL) :
+# mvn spring-boot:run -Dspring-boot.run.profiles=h2
